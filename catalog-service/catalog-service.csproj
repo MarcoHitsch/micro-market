@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>catalog_service</RootNamespace>
+    <UserSecretsId>db5b9755-1d49-44d3-83d9-7020b1587e9d</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EasyNetQ" Version="6.5.2" />
+    <PackageReference Include="EasyNetQ.DI.Microsoft" Version="6.5.2" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.40.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="6.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.7" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\catalog-service-api\catalog-service-api.csproj" />
+    <ProjectReference Include="..\shared\shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\catalog-service-api\Proto\ProductService.proto" GrpcServices="Server">
+      <Link>Protos\ProductService.proto</Link>
+    </Protobuf>
+  </ItemGroup>
+
+	<Target Name="OpenAPI" AfterTargets="PostBuildEvent" Condition="$(Configuration)=='Debug'">
+		<Exec Command="dotnet tool restore" />
+		<Exec Command="dotnet swagger tofile --output catalog_swagger.json $(OutputPath)\$(AssemblyName).dll v1 " EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Build" />
+	</Target>
+
+</Project>

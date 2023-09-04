@@ -1,0 +1,7 @@
+podAnnotations: {
+  prometheus.io/scrape: "true",
+  prometheus.io/port: "metrics"
+}
+
+mongodb:
+  uri: "mongodb://root:mFsBqSN6am@mongodb:27017"

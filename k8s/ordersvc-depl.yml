@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-ordersvc
+  labels:
+    version: dev
+    product: ordersvc
+spec:
+  selector:
+    app: ordersvc
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep-ordersvc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordersvc
+  template:
+    metadata:
+      labels:
+        app: ordersvc
+    spec:
+      containers:
+      - name: ordersvc
+        image: futuraacr.azurecr.io/ordersvc:latest
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          value: Kube
+        - name: ASPNETCORE_URLS
+          value: http://+:80
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "0.10"
+      imagePullSecrets:
+        - name: acr-secret

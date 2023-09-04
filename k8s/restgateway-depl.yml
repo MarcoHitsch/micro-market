@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-restgateway
+  labels:
+    version: dev
+    product: restgateway
+spec:
+  type:
+    LoadBalancer
+  selector:
+    app: dep-restgateway
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep-restgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restgateway
+  template:
+    metadata:
+      labels:
+        app: restgateway
+    spec:
+      containers:
+      - name: restgateway
+        image: futuraacr.azurecr.io/restgateway:latest
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          value: Kube
+        - name: ASPNETCORE_URLS
+          value: http://+:80
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "0.10"
+      imagePullSecrets:
+        - name: acr-secret

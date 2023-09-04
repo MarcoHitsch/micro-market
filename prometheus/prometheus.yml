@@ -1,0 +1,34 @@
+global:
+  scrape_interval:     3s # By default, scrape targets every 5 seconds.
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  # external_labels:
+  #   monitor: 'nats-openrmf-server'
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  - job_name: 'catalog-service.api-read-prometheus'
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+    - targets:
+        - catalogsvc:6010
+  - job_name: 'basket-service.api-read-prometheus'
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+    - targets:
+        - basketsvc:6020
+  - job_name: 'order-service.api-read-prometheus'
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+    - targets:
+        - ordersvc:6030                
+  - job_name: 'restgateway.api-read-prometheus'
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+    - targets:
+        - restgateway:6040

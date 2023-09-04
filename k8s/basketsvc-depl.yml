@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-basketsvc
+  labels:
+    version: dev
+    product: basketsvc
+spec:
+  selector:
+    app: basketsvc
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep-basketsvc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: basketsvc
+  template:
+    metadata:
+      labels:
+        app: basketsvc
+    spec:
+      containers:
+      - name: basketsvc
+        image: futuraacr.azurecr.io/basketsvc:latest
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          value: Kube
+        - name: ASPNETCORE_URLS
+          value: http://+:80
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "0.10"
+      imagePullSecrets:
+        - name: acr-secret

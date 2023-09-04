@@ -1,0 +1,1 @@
+kubectl create secret docker-registry acr-secret --docker-server=mhitschtest.azurecr.io --docker-username=mhitschtest --docker-password=mdFwkJLAEjn2igHF9IH7wt5FyxK/CSGQ

@@ -1,0 +1,174 @@
+version: '3.5'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "8051:5432"
+    networks:
+      - dbs
+    restart: unless-stopped
+  
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.de
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+
+    ports:
+      - "8050:80"
+    networks:
+      - dbs
+    restart: unless-stopped
+  
+  mongodb:
+    image: mongo
+    ports:
+      - "8052:27017"
+    networks:
+      - dbs
+    volumes:
+      - mongo:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo
+
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - "8053:6379"
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes: 
+      - redis:/data
+    networks:
+      - dbs
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 8054:5672
+        - 8055:15672
+    networks:
+        - dbs
+
+  catalogsvc:
+    image: catalogsvc:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:6010
+      - ASPNETCORE_ENVIRONMENT=Docker
+    ports:
+      - 6010:6010
+    networks:
+      - dbs
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  basketsvc:
+    image: basketsvc:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:6020
+      - ASPNETCORE_ENVIRONMENT=Docker
+    ports:
+      - 6020:6020
+    networks:
+      - dbs
+    depends_on:
+      - cache
+      - rabbitmq
+
+  ordersvc:
+    image: ordersvc:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:6030
+      - ASPNETCORE_ENVIRONMENT=Docker
+    ports:
+      - 6030:6030
+    networks:
+      - dbs
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - catalogsvc
+
+  restgateway:
+    image: restgateway:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:6040
+      - ASPNETCORE_ENVIRONMENT=Docker
+    ports:
+      - "6040:6040"
+    networks:
+      - dbs
+    depends_on:
+      - basketsvc
+      - ordersvc
+      - catalogsvc      
+
+  grafana:
+    image: grafana/grafana:master
+    ports:
+      - "3000:3000"
+    volumes:
+        - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+        - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+        prometheus:
+            condition: service_healthy
+    healthcheck:
+        test: wget -q --tries=1 -O- http://localhost:3000/
+        interval: 3s
+        timeout: 3s
+        retries: 10
+        start_period: 10s
+    networks:
+      - dbs        
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    healthcheck:
+        test: wget -q --tries=1 -O- http://localhost:9090/
+        interval: 3s
+        timeout: 3s
+        retries: 10
+        start_period: 10s    
+    networks:
+      - dbs
+
+  loki:
+    image: grafana/loki:2.5.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - dbs      
+
+networks:
+  dbs:
+    driver: bridge
+
+volumes:
+    postgres:
+    pgadmin:
+    mongo:
+    redis:

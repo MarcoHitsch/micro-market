@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>basket_service</RootNamespace>
+    <UserSecretsId>ff223713-797f-4f1d-bb0f-d5871f7195a0</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.40.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.7" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\basket-service-api\basket-service-api.csproj" />
+    <ProjectReference Include="..\catalog-service-api\catalog-service-api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\basket-service-api\Proto\BasketService.proto" GrpcServices="Server">
+      <Link>Protos\BasketService.proto</Link>
+    </Protobuf>
+    <Protobuf Include="..\catalog-service-api\Proto\ProductService.proto" GrpcServices="Client">
+      <Link>Protos\ProductService.proto</Link>
+    </Protobuf>
+  </ItemGroup>
+
+	<Target Name="OpenAPI" AfterTargets="PostBuildEvent" Condition="$(Configuration)=='Debug'">
+		<Exec Command="dotnet tool restore" />
+		<Exec Command="dotnet swagger tofile --output basket_swagger.json $(OutputPath)\$(AssemblyName).dll v1 " EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Build" />
+	</Target>
+
+</Project>

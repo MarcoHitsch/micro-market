@@ -1,0 +1,13 @@
+auth:
+  username: "admin"
+  password: "admin"
+
+rabbitmq:
+  erlangCookie: "erlangCookiesecretcookie"
+
+metrics:
+  enabled: true
+  podAnnotations: {
+    prometheus.io/scrape: "true",
+    prometheus.io/port: "metrics"
+  }
